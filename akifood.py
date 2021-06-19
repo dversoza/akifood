@@ -2,7 +2,7 @@ import time
 
 # Base dishes to start application
 dishes_db = [
-    {'_name': 'Bolo de cholocate', 'massa': False},
+    {'_name': 'Bolo de chocolate', 'massa': False},
     {'_name': 'Lasanha', 'massa': True}
 ]
 
@@ -104,6 +104,11 @@ class Game:
         new_dish_name = input(
             'Aproveitando que você ainda está ai, em que prato pensou?\n').capitalize()
 
+        # Quits game if user trying to cheat
+        if wrong_dish['_name'] == new_dish_name:
+            print('Está tentando me enganar né?')
+            return
+
         time.sleep(1)
         print(
             f'Nossa... Seu prato era {new_dish_name}, como não pensei nisso antes?')
@@ -119,6 +124,7 @@ class Game:
             print('Está tentando me enganar né?')
             print(
                 'https://images.freeimages.com/images/large-previews/637/sad-dog-1604766.jpg')
+            return
 
         # Create new dish dict, preserving current adjectives configuration
         new_dish = {
@@ -160,6 +166,12 @@ class Game:
 
         # Appends updated record to DB (currently, in memory list of dicts)
         dishes_db.append(new_dish)
+
+    def create_new_dish(self):
+        # Creates new dish if inexistent and no matching attempts in game
+        new_dish_name = input('Em que prato pensou?\n').capitalize()
+        new_dish = {'_name': new_dish_name} | self.current_game_adjectives
+        self.save_game(new_dish=new_dish)
 
 
 while True:
