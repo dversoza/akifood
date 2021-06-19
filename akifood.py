@@ -98,8 +98,42 @@ class Game:
                     "Resposta inválida. Responda com 's' para 'Sim' ou 'n' para 'Não'.")
         return
 
-    def get_smarter(self):
-        # Saves new dish to and updates wrong dish adjectives to db
+    def get_smarter(self, wrong_dish):
+        # Prompts user to input right dish and assign one new adjective to it
+        # Capitalizes string to save dishes names prettier
+        new_dish_name = input(
+            'Aproveitando que você ainda está ai, em que prato pensou?\n').capitalize()
+
+        time.sleep(1)
+        print(
+            f'Nossa... Seu prato era {new_dish_name}, como não pensei nisso antes?')
+        time.sleep(1)
+
+        # Save adjectives as lower string to make it prettier
+        new_dish_adjective = input(
+            f"Se puder me ajudar a ficar mais inteligente, {new_dish_name} é ______, mas {wrong_dish['_name']} não.\n").lower()
+
+        # Ignores '_name' adjective to avoid keyerror bug
+        # TODO: fix using adjective and dishes Classes or ORM
+        if new_dish_adjective == '_name':
+            print('Está tentando me enganar né?')
+            print(
+                'https://images.freeimages.com/images/large-previews/637/sad-dog-1604766.jpg')
+
+        # Create new dish dict, preserving current adjectives configuration
+        new_dish = {
+            '_name': new_dish_name,
+            new_dish_adjective: True
+        } | self.current_game_adjectives
+
+        # Update wrong tried dish dict, preserving current adjectives configuration
+        wrong_dish |= {
+            new_dish_adjective: False
+        } | self.current_game_adjectives
+
+        # Save to DB
+        self.save_game(new_dish, wrong_dish)
+        print('Muito obrigado! 👊👊👊')
         return
 
 
