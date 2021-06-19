@@ -1,14 +1,11 @@
 import time
 
-# Base dishes to start application
-dishes_db = [
-    {'_name': 'Bolo de chocolate', 'massa': False},
-    {'_name': 'Lasanha', 'massa': True}
-]
-
 
 class Game:
     def __init__(self, db: list) -> None:
+        # Assign db to local variable
+        self.dishes_db = db
+
         # Copy global dishes_db to class variable, so partial results won't affect db
         self.current_game_dishes: list = db
 
@@ -144,36 +141,28 @@ class Game:
 
     def save_game(self, new_dish, wrong_dish=None):
         # Saves inputs to DB
-        # Calls global db variable (as it's still only saved in memory)
-        global dishes_db
-
         # If user inputs existing dish, updates it
-        existing_dishes = [x['_name'] for x in dishes_db]
+        existing_dishes = [x['_name'] for x in self.dishes_db]
         if new_dish in existing_dishes:
             new_dish_old_adjectives = [
-                x for x in dishes_db if x.get('_name') == new_dish][0]
+                x for x in self.dishes_db if x.get('_name') == new_dish][0]
             new_dish |= new_dish_old_adjectives
 
         # If attempted a dish, creates it. If not, skip.
         if wrong_dish:
-            dishes_db = [
-                x for x in dishes_db
+            self.dishes_db = [
+                x for x in self.dishes_db
                 if x['_name'] != wrong_dish['_name']
                 and x['_name'] != new_dish['_name']
             ]
-            # Appends new record to DB (currently, in memory list of dicts)
-            dishes_db.append(wrong_dish)
+            # Appends new record to DB (currently, in-memory list of dicts)
+            self.dishes_db.append(wrong_dish)
 
-        # Appends updated record to DB (currently, in memory list of dicts)
-        dishes_db.append(new_dish)
+        # Appends updated record to DB (currently, in-memory list of dicts)
+        self.dishes_db.append(new_dish)
 
     def create_new_dish(self):
         # Creates new dish if inexistent and no matching attempts in game
         new_dish_name = input('Em que prato pensou?\n').capitalize()
         new_dish = {'_name': new_dish_name} | self.current_game_adjectives
         self.save_game(new_dish=new_dish)
-
-
-while True:
-    game = Game(db=dishes_db)
-    game.run()
