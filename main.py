@@ -1,5 +1,6 @@
-import time
-from akifood import Game
+from tkinter import *
+
+from ui import AkiFoodUI
 
 # Base dishes to start application
 dishes_db = [
@@ -9,14 +10,6 @@ dishes_db = [
 
 if __name__ == '__main__':
     """Program entry point"""
-    while True:
-        game = Game(db=dishes_db)
-        game.run()
-
-        # Updates DB after each run
-        dishes_db = game.dishes_db
-
-        # Automatically restarts game
-        time.sleep(1)
-        print('Vamos jogar novamente?')
-        time.sleep(1)
+    ui_root = Tk()
+    AkiFoodUI(ui_root, db=dishes_db)
+    ui_root.mainloop()
