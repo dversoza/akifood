@@ -2,30 +2,41 @@ from tkinter import *
 from tkinter import messagebox as mb
 from tkinter import ttk
 
+from settings import *
 from akifood import Game
 
 
-class AkiFoodUI:
+class BaseUI:
+    # Base user interface
+    def __init__(self, window, width=None, height=None, **options) -> None:
+        """Pass options to base UI using kwargs"""
+        self.app_width = width if width else APP_DEFAULT_WIDTH
+        self.app_height = height if height else APP_DEFAULT_HEIGHT
+        if 'not_centered' in options:
+            self.center_window(window) if options['not_centered'] else None
+        pass
+
+    def center_window(self, win):
+        # Centers window to user screen
+        screen_width = win.winfo_screenwidth()
+        screen_height = win.winfo_screenheight()
+
+        x = (screen_width/2) - (self.app_width/2)
+        y = (screen_height/2) - (self.app_height/2)
+
+        win.geometry(f'{self.app_width}x{self.app_height}+{int(x)}+{int(y)}')
+
+
+class AkiFoodUI(BaseUI):
     def __init__(self, root, db) -> None:
+        super().__init__(root)
         self.game = Game()
         self.root = root
         self.db = db
         self.main_interface()
 
-    def center(self, win):
-        app_width = 300
-        app_height = 100
-
-        screen_width = win.winfo_screenwidth()
-        screen_height = win.winfo_screenheight()
-
-        x = (screen_width/2) - (app_width/2)
-        y = (screen_height/2) - (app_height/2)
-
-        win.geometry(f'{app_width}x{app_height}+{int(x)}+{int(y)}')
-
     def main_interface(self):
-        self.center(win=self.root)
+        self.center_window(win=self.root)
         self.root.title("AkiFood")
 
         mainframe = ttk.Frame(self.root, padding="3 3 12 12")
@@ -66,7 +77,7 @@ class AkiFoodUI:
             attempt_adjective_window.destroy()
 
         attempt_adjective_window = Toplevel(self.root)
-        self.center(attempt_adjective_window)
+        self.center_window(attempt_adjective_window)
         ttk.Label(attempt_adjective_window,
                   text=f'O prato que você pensou é {adjective}?').pack()
         yes_btn = ttk.Button(attempt_adjective_window,
@@ -88,7 +99,7 @@ class AkiFoodUI:
             attempt_dish_window.destroy()
 
         attempt_dish_window = Toplevel(self.root)
-        self.center(attempt_dish_window)
+        self.center_window(attempt_dish_window)
         ttk.Label(attempt_dish_window,
                   text=f"Ahá! Então seu prato é {dish['_name']}?").pack()
         yes_btn = ttk.Button(attempt_dish_window, text="Sim", command=true_btn)
@@ -109,7 +120,7 @@ class AkiFoodUI:
                 self.reload_game()
 
         new_dish_window = Toplevel(self.root)
-        self.center(new_dish_window)
+        self.center_window(new_dish_window)
         ttk.Label(new_dish_window,
                   text='Aproveitando que você ainda está ai...').pack()
         ttk.Label(new_dish_window, text='Em que prato pensou?').pack()
@@ -132,7 +143,7 @@ class AkiFoodUI:
             new_dish_attr_window.destroy()
 
         new_dish_attr_window = Toplevel(self.root)
-        self.center(new_dish_attr_window)
+        self.center_window(new_dish_attr_window)
         ttk.Label(new_dish_attr_window,
                   text="Se puder me ajudar a ficar mais inteligente ...").pack()
         ttk.Label(new_dish_attr_window,

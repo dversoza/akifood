@@ -1,0 +1,4 @@
+# App basic settings
+
+APP_DEFAULT_WIDTH = 300
+APP_DEFAULT_HEIGHT = 100
