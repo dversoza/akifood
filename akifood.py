@@ -1,74 +1,85 @@
+from settings import DISHES
+
+
 class Game:
-    def run(self, db):
-        # Assign db to local variable
-        self.dishes_db = db
+    def __init__(self, database) -> None:
+        self.possible_dishes: list = database.dishes
+        self.adjectives_to_ask: list = database.get_adjectives()
+        self.asked_adjectives: dict = {}
+        pass
 
-        # Copy global dishes_db to class variable, so partial results won't affect db
-        self.current_game_dishes: list = db
-
-        # Record game adjectives to update dishes atributes after run
-        self.current_game_adjectives: dict = {}
-
-        # Assign all adjectives to variable to iter them during execution
-        self.adjectives: set = set().union(*(x.keys()
-                                             for x in self.current_game_dishes))
-        # Removes dishes names ('_name') from adjectives set
-        self.adjectives.remove('_name')
-
-    def update_adjective_status(self, adjective: str, status: bool):
-        self.current_game_dishes = [
-            x for x in self.current_game_dishes
+    def filter_possible_dishes_according_to_user_input(self, adjective: str, situation: bool):
+        self.possible_dishes = [
+            x for x in self.possible_dishes
             if adjective not in x
-            or x[adjective] == status
+            or x[adjective] == situation
         ]
-        self.current_game_adjectives[adjective] = status
 
-    def get_smarter(self, wrong_dish: dict, new_dish: str, new_adjective: str):
-        # Prompts user to input right dish and assign one new adjective to it
+    def append_adjective_to_asked_adjectives(self, adjective: str, situation: bool):
+        self.asked_adjectives[adjective] = situation
 
-        # Quits game if user trying to cheat
-        if wrong_dish['_name'] == new_dish:
-            print('Está tentando me enganar né?')
-            return
+    def update_adjective_status(self, adjective: str, situation: bool):
+        self.filter_possible_dishes_according_to_user_input(
+            adjective, situation)
+        self.append_adjective_to_asked_adjectives(adjective, situation)
+        self.adjectives_to_ask.remove(adjective)
 
-        # Create new dish dict, preserving current adjectives configuration
-        new_dish: dict = {
-            '_name': new_dish,
-            new_adjective: True
-        } | self.current_game_adjectives
+    def next_step(self):
+        if len(self.possible_dishes) == 1:
+            dish = self.possible_dishes[0]
+            return ('attempt_dish', dish['_name'])
 
-        # Update wrong tried dish dict, preserving current adjectives configuration
-        wrong_dish |= {
-            new_adjective: False
-        } | self.current_game_adjectives
+        elif len(self.possible_dishes) == 0 or len(self.adjectives_to_ask) == 0:
+            return ('no_dishes',)
 
-        # Save to DB
-        self.save_game(new_dish, wrong_dish)
-        return
+        else:
+            return ('attempt_adjective', self.adjectives_to_ask[0])
 
-    def save_game(self, new_dish: dict, wrong_dish: dict = None):
-        # Saves inputs to DB
-        # If user inputs existing dish, updates it
-        existing_dishes = [x['_name'] for x in self.dishes_db]
-        if new_dish['_name'] in existing_dishes:
-            new_dish_old_adjectives = [
-                x for x in self.dishes_db if x.get('_name') == new_dish['_name']][0]
-            new_dish |= new_dish_old_adjectives
 
-        # If attempted a dish, creates it. If not, skip.
-        if wrong_dish:
-            self.dishes_db = [
-                x for x in self.dishes_db
-                if x['_name'] != wrong_dish['_name']
-                and x['_name'] != new_dish['_name']
-            ]
-            # Appends new record to DB (currently, in-memory list of dicts)
-            self.dishes_db.append(wrong_dish)
+class DatabaseRepository:
+    def __init__(self, database=None) -> None:
+        initial_db = DISHES
+        self.dishes = database if database is not None else initial_db
+        pass
 
-        # Appends updated record to DB (currently, in-memory list of dicts)
-        self.dishes_db.append(new_dish)
+    def get_adjectives(self) -> list:
+        def remove_name_adjective(adjectives: list):
+            adjectives.remove('_name')
 
-    def create_new_dish(self, new_dish):
-        # Creates new dish if inexistent and no matching attempts in game
-        new_dish: dict = {'_name': new_dish} | self.current_game_adjectives
-        self.save_game(new_dish=new_dish)
+        adjectives: set = set().union(*(x.keys() for x in self.dishes))
+        remove_name_adjective(adjectives)
+        return list(adjectives)
+
+    def get_dishes_names(self) -> list:
+        existing_dishes = [x['_name'] for x in self.dishes]
+        return existing_dishes
+
+    def get_dish_adjectives(self, dish_name: str) -> dict:
+        dish = [x for x in self.dishes if x['_name'] == dish_name]
+        adjectives = dish[0]
+        return adjectives
+
+    def create_dish(self, dish: dict) -> None:
+        if self.dish_already_exists(dish):
+            new_dish: dict = self.complete_dish_adjectives(dish)
+            self.remove_dish(dish)
+
+        else:
+            new_dish = dish
+
+        self.dishes.append(new_dish)
+
+    def complete_dish_adjectives(self, dish: dict) -> dict:
+        existing_adjectives = self.get_dish_adjectives(dish['_name'])
+        dish |= existing_adjectives
+        return dish
+
+    def remove_dish(self, dish: dict):
+        self.dishes = [x for x in self.dishes if x['_name'] != dish['_name']]
+
+    def dish_already_exists(self, dish: dict) -> bool:
+        existing_dishes = self.get_dishes_names()
+        if dish['_name'] in existing_dishes:
+            return True
+        else:
+            return False
