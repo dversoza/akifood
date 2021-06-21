@@ -57,7 +57,7 @@ class AkiFoodUI(BaseUI):
         self.root.bind('<Return>', btn_handler)
 
     def attempt_adjective_form(self, adjective: str):
-        def true_btn():
+        def true_btn(event=None):
             self.game.update_adjective_status(adjective, True)
             self.controller.game_next_step()
             _frame.destroy()
@@ -77,8 +77,10 @@ class AkiFoodUI(BaseUI):
         no_btn = Button(_frame, padx=25, pady=5, text="Não", command=false_btn)
         no_btn.grid(column=1, row=1)
 
+        self.root.bind('<Return>', true_btn)
+
     def attempt_dish_form(self, dish: str):
-        def true_btn():
+        def true_btn(event=None):
             mb.showinfo('Uhul!', 'Acertei de novo!')
             _frame.destroy()
             self.controller.reload_game()
@@ -98,9 +100,11 @@ class AkiFoodUI(BaseUI):
         no_btn = Button(_frame, text="Não", padx=25, pady=5, command=false_btn)
         no_btn.grid(column=1, row=1)
 
+        self.root.bind('<Return>', true_btn)
+
     def new_dish_form(self, attempted_wrong_dish: str = None):
         def btn_handler(event=None):
-            if new_dish_name.get() is None:
+            if new_dish_name.get() == '':
                 Label(_frame, text='Preencha o nome do prato para continuar!').grid()
                 return
 
@@ -130,9 +134,15 @@ class AkiFoodUI(BaseUI):
 
     def new_adjective_form(self, wrong_dish, right_dish):
         def btn_handler(event=None):
-            _frame.destroy()
-            self.controller.new_adjective_handler(
-                wrong_dish, right_dish, new_adjective.get())
+            if new_adjective.get() == '':
+                Label(
+                    _frame, text='Preencha um adjetivo do prato para continuar!').grid()
+                return
+
+            else:
+                _frame.destroy()
+                self.controller.new_adjective_handler(
+                    wrong_dish, right_dish, new_adjective.get())
 
         _frame = self.mainframe(self.root)
 
