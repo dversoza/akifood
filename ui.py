@@ -7,14 +7,10 @@ from akifood import Game
 
 class BaseUI:
     # Base user interface
-    def __init__(self, root, width=None, height=None, title=None, *args, **kwargs) -> None:
+    def __init__(self, root, width=None, height=None, *args, **kwargs) -> None:
         """Pass options to base UI using kwargs"""
         self.app_width = width if width else APP_DEFAULT_WIDTH
         self.app_height = height if height else APP_DEFAULT_HEIGHT
-        self.title = title if title else APP_TITLE
-
-        # Sets config through Tkinter
-        root.title(self.title)
 
         # Centers UI window to user screen
         self.center_window(root)
@@ -53,12 +49,18 @@ class AkiFoodUI(BaseUI):
         self.main_interface()
 
     def main_interface(self):
+        def btn_handler(event=None):
+            self.start_game()
+
         _frame = self.mainframe(self.root)
+        self.root.title(APP_TITLE)
 
         Label(_frame, text='Seja bem-vindo ao AkiFood!').grid()
         Label(_frame, text='Pense em um prato que gosta ...').grid()
-        Button(_frame, text="OK", padx=25, pady=5,
-               command=self.start_game).grid()
+        Button(_frame, text="OK", padx=25, pady=5, command=btn_handler).grid()
+
+        self.root.bind('<Return>', btn_handler)
+        _frame.focus()
 
     def start_game(self):
         # Calls Game class and manage runtime
@@ -104,6 +106,7 @@ class AkiFoodUI(BaseUI):
             _window.destroy()
 
         def false_btn():
+            self.root.title('Errei... Desisto')
             self.new_dish_form(wrong_dish=dish)
             _window.destroy()
 
@@ -120,11 +123,13 @@ class AkiFoodUI(BaseUI):
         self.root.wait_window(_window)
 
     def new_dish_form(self, wrong_dish: dict = None):
-        def button_handler():
+        def btn_handler(event=None):
+            # Prompts new adjective form only if wrong dish attempted
             if wrong_dish:
                 self.new_adjective_form(new_dish_name.get(), wrong_dish)
                 _window.destroy()
 
+            # If no dish attempted (no options availabe), only creates a new one
             else:
                 self.game.create_new_dish(new_dish_name.get())
                 _window.destroy()
@@ -132,22 +137,20 @@ class AkiFoodUI(BaseUI):
 
         _window, _frame = self.popup(self.root)
 
-        self.center_window(_window)
         Label(_frame, text='Aproveitando que você ainda está ai...').grid()
         Label(_frame, text='Em que prato pensou?').grid()
 
         new_dish_name = StringVar()
-        new_dish_name_entry = Entry(_frame, textvariable=new_dish_name)
-        new_dish_name_entry.grid()
+        _entry = Entry(_frame, textvariable=new_dish_name)
+        _entry.grid()
+        _entry.focus()
 
-        new_dish_name_entry.focus()
+        Button(_window, text="OK", padx=25, pady=5, command=btn_handler).grid()
 
-        Button(_window, text="OK", padx=25, pady=5,
-               command=button_handler).grid()
-        self.root.bind("<Return>", button_handler)
+        _window.bind('<Return>', btn_handler)
 
     def new_adjective_form(self, new_dish_name, wrong_dish):
-        def ok_btn():
+        def btn_handler(event=None):
             self.game.get_smarter(wrong_dish=wrong_dish,
                                   new_dish=new_dish_name,
                                   new_adjective=new_adjective.get())
@@ -157,15 +160,18 @@ class AkiFoodUI(BaseUI):
         _window, _frame = self.popup(self.root)
 
         Label(_frame, text="Se puder me ajudar a ficar mais inteligente ...").grid()
-        Label(
-            _frame, text=f"{new_dish_name} é ______, mas {wrong_dish['_name']} não.").grid()
+        Label(_frame,
+              text=f"{new_dish_name} é ______, mas {wrong_dish['_name']} não."
+              ).grid()
 
         new_adjective = StringVar()
         _entry = Entry(_frame, textvariable=new_adjective)
         _entry.grid()
         _entry.focus()
-        ok_btn = Button(_frame, text="OK", padx=25, pady=5, command=ok_btn)
-        ok_btn.grid()
+
+        Button(_frame, text="OK", padx=25, pady=5, command=btn_handler).grid()
+
+        _window.bind('<Return>', btn_handler)
 
     def reload_game(self):
         # Updates db from last game run, preserving entries to next run
