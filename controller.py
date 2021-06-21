@@ -12,8 +12,6 @@ class Controller:
         pass
 
     def game_next_step(self):
-        print(self.game.adjectives_to_ask, self.game.possible_dishes)
-        # Calls game next step (in this case, first move)
         next_step, next_step_info = self.game.next_step()
 
         if next_step == 'attempt_dish':
