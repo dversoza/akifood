@@ -14,7 +14,6 @@ class BaseUI:
 
         # Centers UI window to user screen
         self.center_window(root)
-
         self.root = root
 
     def center_window(self, win):
