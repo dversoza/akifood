@@ -1,5 +1,5 @@
 import unittest
-from akifood import DatabaseRepository
+from akifood import DatabaseRepository, Game
 
 
 class TestDatabaseRepository(unittest.TestCase):
@@ -125,6 +125,51 @@ class TestDatabaseRepository(unittest.TestCase):
             fake_dish_extra_adjectives)
         self.assertDictEqual(result, fake_dish | fake_dish_extra_adjectives,
                              error_msg)
+
+
+class TestGame(unittest.TestCase):
+    def __init__(self, methodName: str) -> None:
+        super().__init__(methodName=methodName)
+        database = DatabaseRepository()
+        self.game = Game(database)
+
+    def test_game_starts_with_default_values(self):
+        error_msg = 'Game starting with no {} default values!'
+        self.assertIsNotNone(self.game.possible_dishes,
+                             error_msg.format('possible_dishes'))
+        self.assertIsNotNone(self.game.adjectives_to_ask,
+                             error_msg.format('adjectives_to_ask'))
+
+    def test_game_filters_dishes_according_to_user_input(self):
+        error_msg = 'Game not filtering dishes'
+        dish_1 = {'_name': 'Sushi', 'Japonês': True, 'Italiano': False}
+        dish_2 = {'_name': 'Macarrão', 'Japonês': False, 'Italiano': True}
+
+        self.game.possible_dishes = [dish_1, dish_2]
+
+        self.game.filter_possible_dishes_according_to_user_input(
+            'Italiano', False)
+        self.assertNotIn(dish_2, self.game.possible_dishes, error_msg)
+        self.assertIn(dish_1, self.game.possible_dishes, error_msg)
+
+    def test_game_appends_adjective_to_asked_adjectives(self):
+        error_msg = "Game appending adjectives to it's state"
+        adjective, situation = ('Italiano', False)
+        self.game.append_adjective_to_asked_adjectives(adjective, situation)
+        self.assertIn(adjective, self.game.asked_adjectives, error_msg)
+        self.assertEqual(
+            situation, self.game.asked_adjectives[adjective], error_msg)
+
+    def test_game_removes_attempted_adjectives(self):
+        error_msg = "Game is not removing a attempted adjective!"
+        adjective, situation = ('Italiano', False)
+        self.game.append_adjective_to_asked_adjectives(adjective, situation)
+        self.assertNotIn(adjective, self.game.adjectives_to_ask, error_msg)
+
+    def test_game_returns_tuple_as_next_step(self):
+        response = self.game.next_step()
+        self.assertIsInstance(
+            response, tuple, 'Game not giving tuple as next step.')
 
 
 if __name__ == '__main__':
