@@ -1,6 +1,3 @@
-import time
-
-
 class Game:
     def run(self, db):
         # Assign db to local variable
@@ -25,31 +22,6 @@ class Game:
             or x[adjective] == status
         ]
         self.current_game_adjectives[adjective] = status
-
-    def attempt_dish(self):
-        # Prompt dish to user say if it's the right one
-        # Should only be called if one dish remaining in current game options
-        while True:
-            # Retrieves remaining dish
-            dish = self.current_game_dishes[0]
-            response = input(f"Ahá! Então seu prato é {dish['_name']}?\n")
-
-            # Exit run if right
-            if response == 's':
-                print('Acertei de novo!')
-                break
-
-            # Continues run to get smarter (save/update adjectives/dishes to db)
-            elif response == 'n':
-                print('Errei, que pena... Quem sabe na próxima...')
-                time.sleep(1)
-                self.get_smarter(dish)
-                break
-
-            else:
-                print(
-                    "Resposta inválida. Responda com 's' para 'Sim' ou 'n' para 'Não'.")
-        return
 
     def get_smarter(self, wrong_dish: dict, new_dish: str, new_adjective: str):
         # Prompts user to input right dish and assign one new adjective to it
