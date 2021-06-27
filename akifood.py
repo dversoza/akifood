@@ -1,85 +1,81 @@
-from settings import DISHES
+from tkinter.messagebox import askyesno
+from tkinter.simpledialog import askstring
+
+from models import DishAdjective, Dish
 
 
 class Game:
-    def __init__(self, database) -> None:
-        self.possible_dishes: list = database.dishes
-        self.adjectives_to_ask: list = database.get_adjectives()
-        self.asked_adjectives: dict = {}
+    def __init__(self, root) -> None:
+        self.game_name = 'Jogo Gourmet'
+        self.root = root
         pass
 
-    def filter_possible_dishes_according_to_user_input(self, adjective: str, situation: bool):
-        self.possible_dishes = [
-            x for x in self.possible_dishes
-            if adjective not in x
-            or x[adjective] == situation
-        ]
+    def filter_with_adjective(self, adjective_id, dishes) -> list:
+        list_filter = filter(
+            lambda x: True if adjective_id in x.dish_adjectives_id else False,
+            dishes
+        )
+        filtered_dishes = list(list_filter)
+        return filtered_dishes
 
-    def append_adjective_to_asked_adjectives(self, adjective: str, situation: bool):
-        self.asked_adjectives[adjective] = situation
+    def filter_without_adjective(self, adjective_id, dishes) -> list:
+        list_filter = filter(
+            lambda x: True if adjective_id not in x.dish_adjectives_id else False,
+            dishes
+        )
+        filtered_dishes = list(list_filter)
+        return filtered_dishes
 
-    def update_adjective_status(self, adjective: str, situation: bool):
-        self.filter_possible_dishes_according_to_user_input(
-            adjective, situation)
-        self.append_adjective_to_asked_adjectives(adjective, situation)
-        self.adjectives_to_ask.remove(adjective)
+    def ask_user_right_dish(self, dish_name):
+        resp = askyesno(self.game_name, f'Você pensou em {dish_name}?')
+        return resp
 
-    def next_step(self):
-        if len(self.possible_dishes) == 1:
-            dish = self.possible_dishes[0]
-            return ('attempt_dish', dish['_name'])
+    def get_dish_name(self):
+        dish_name = askstring(title=self.game_name,
+                              prompt='Qual prato você pensou?\n',
+                              parent=self.root)
 
-        elif len(self.possible_dishes) == 0 or len(self.adjectives_to_ask) == 0:
-            return ('no_dishes',)
+        return dish_name
 
-        else:
-            return ('attempt_adjective', self.adjectives_to_ask[0])
+    def get_new_adjective(self, new_dish, wrong_dish):
+        new_adjective = askstring(title=self.game_name,
+                                  prompt=f'O {new_dish} é ______ mas o {wrong_dish} não?\n',
+                                  parent=self.root)
+        return new_adjective
 
+    def create_dish(self, name, adjectives):
+        new_dish = Dish(
+            name=name,
+            dish_adjectives_id=adjectives
+        )
+        return new_dish
 
-class DatabaseRepository:
-    def __init__(self, database=None) -> None:
-        initial_db = DISHES
-        self.dishes = database if database is not None else initial_db
-        pass
+    def create_dish_adjective(self, _id, dish_adjective):
+        new_dish_adjective = DishAdjective(
+            _id=_id,
+            name=dish_adjective
+        )
+        return new_dish_adjective
 
-    def get_adjectives(self) -> list:
-        def remove_name_adjective(adjectives: list):
-            adjectives.remove('_name')
+    def next_adjective_id(self, current_adjectives):
+        return len(current_adjectives) + 1
 
-        adjectives: set = set().union(*(x.keys() for x in self.dishes))
-        remove_name_adjective(adjectives)
-        return list(adjectives)
+    def get_user_answers(self, dishes, adjectives):
 
-    def get_dishes_names(self) -> list:
-        existing_dishes = [x['_name'] for x in self.dishes]
-        return existing_dishes
+        user_answer_adjectives = []
 
-    def get_dish_adjectives(self, dish_name: str) -> dict:
-        dish = [x for x in self.dishes if x['_name'] == dish_name]
-        adjectives = dish[0]
-        return adjectives
+        for adjective in adjectives:
 
-    def create_dish(self, dish: dict) -> None:
-        if self.dish_already_exists(dish):
-            new_dish: dict = self.complete_dish_adjectives(dish)
-            self.remove_dish(dish)
+            resp = askyesno('AkiFood', f'Seu prato é {adjective.name}?\n')
 
-        else:
-            new_dish = dish
+            if resp:
+                user_answer_adjectives.append(adjective._id)
+                dishes = self.filter_with_adjective(adjective._id, dishes)
 
-        self.dishes.append(new_dish)
+            if not resp:
+                dishes = self.filter_without_adjective(adjective._id, dishes)
 
-    def complete_dish_adjectives(self, dish: dict) -> dict:
-        existing_adjectives = self.get_dish_adjectives(dish['_name'])
-        dish |= existing_adjectives
-        return dish
-
-    def remove_dish(self, dish: dict):
-        self.dishes = [x for x in self.dishes if x['_name'] != dish['_name']]
-
-    def dish_already_exists(self, dish: dict) -> bool:
-        existing_dishes = self.get_dishes_names()
-        if dish['_name'] in existing_dishes:
-            return True
-        else:
-            return False
+            if len(dishes) == 1:
+                dish_attempt = dishes[0].name
+                success = self.ask_user_right_dish(dish_attempt)
+                return (success, user_answer_adjectives, dish_attempt)
