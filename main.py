@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter.messagebox import showinfo
 
-from akifood import Game
-from models import DishAdjective, Dish
+from src.akifood import Game
+from src.models import DishAdjective, Dish
 
 DISHES = [
     Dish(name='Lasanha', dish_adjectives_id=[1]),

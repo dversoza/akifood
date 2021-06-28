@@ -1,11 +1,11 @@
 from tkinter.messagebox import askyesno
 from tkinter.simpledialog import askstring
 
-from models import DishAdjective, Dish
+from .models import DishAdjective, Dish
 
 
 class Game:
-    def __init__(self, root) -> None:
+    def __init__(self, root=None) -> None:
         self.game_name = 'Jogo Gourmet'
         self.root = root
         pass
